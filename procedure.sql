@@ -1,0 +1,45 @@
+CREATE TABLE IF NOT EXISTS stock_logs (
+    id SERIAL PRIMARY KEY,
+    item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    change_type VARCHAR(10) NOT NULL,
+    quantity INT NOT NULL,
+    previous_stock INT NOT NULL,
+    current_stock INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE OR REPLACE PROCEDURE sp_deduct_item_stock(
+    p_item_id INT,
+    p_quantity INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_current_stock INT;
+BEGIN
+    IF p_quantity <= 0 THEN
+        RAISE EXCEPTION 'Jumlah kuantitas harus lebih dari 0';
+    END IF;
+
+    SELECT stock INTO v_current_stock
+    FROM items
+    WHERE id = p_item_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Item dengan ID % tidak ditemukan', p_item_id;
+    END IF;
+
+    IF v_current_stock < p_quantity THEN
+        RAISE EXCEPTION 'Stok tidak mencukupi. Sisa stok: %, Diminta: %', v_current_stock, p_quantity;
+    END IF;
+
+    UPDATE items
+    SET stock = stock - p_quantity,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = p_item_id;
+
+    INSERT INTO stock_logs (item_id, change_type, quantity, previous_stock, current_stock)
+    VALUES (p_item_id, 'DEDUCT', p_quantity, v_current_stock, v_current_stock - p_quantity);
+END;
+$$;

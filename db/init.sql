@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS items (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    price NUMERIC(12, 2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Dummy Data
+INSERT INTO items (name, price, stock) VALUES
+('Logitech MX Master 3S', 1650000, 20),
+('Keychron Q1 Pro', 2850000, 15),
+('Dell UltraSharp 27', 6500000, 8);

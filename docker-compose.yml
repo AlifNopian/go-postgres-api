@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  go_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go_postgres_app
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      DB_NAME: inventory_db
+    depends_on:
+      - postgres
+    networks:
+      - go_network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: go_postgres_db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: inventory_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - go_network
+
+networks:
+  go_network:
+    driver: bridge
+
+volumes:
+  pg_data:
+    driver: local
